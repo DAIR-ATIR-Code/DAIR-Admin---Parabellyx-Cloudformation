@@ -1,0 +1,119 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+
+  "Description" : "Project Iris for Automated Static and Dynamic Application Security Testing, by Parabellyx",
+
+  "Parameters" : {
+    "InstanceName" : {
+      "Description" : "Instance Name of the BoosterPack Application Server",
+      "Type" : "String",
+      "MinLength": "1",
+      "MaxLength": "32",
+      "ConstraintDescription" : "Please provide a unique name within 1 to 32 characters long"
+    },
+    "ApplicationImage" : {
+      "Description" : "Recommended AMI for the BoosterPack Application Server",
+      "Type" : "String",
+      "Default" : "ubuntu-20.04",
+      "AllowedValues" : [ "ubuntu-20.04"],
+      "ConstraintDescription" : "Preset configuration cannot be changed"
+    },
+    "InstanceType" : {
+      "Description" : "Recommended EC2 Instance Type for the BoosterPack Application Server",
+      "Type" : "String",
+      "Default" : "t3.large",
+      "AllowedValues" : [ "t3.large"],
+      "ConstraintDescription" : "Preset configuration cannot be changed"
+    },
+    "KeyPair": {
+      "Description" : "Select an existing KeyPair for SSH access to the BoosterPack Application Server",
+      "Type": "AWS::EC2::KeyPair::KeyName",
+      "ConstraintDescription" : "Must use an existing key pair"
+    },
+    "SecurityGroup": {
+        "Description" : "Select a Security Group in the default VPC",
+        "Type": "AWS::EC2::SecurityGroup::GroupName",
+        "ConstraintDescription" : " Must use an existing Security Group in the default VPC"
+      } 
+  },
+
+  "Mappings": {
+    "OSType2AMI": {
+        "ubuntu-20.04": {
+            "AMIId": "ami-0859074604ca21d57"
+        }
+    }
+  },       
+  "Resources" : {
+    "AppServer": {
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+        "Tags" : [
+            {"Key" : "Name", "Value" : { "Ref" : "InstanceName" }},
+            {"Key" : "BoosterPack", "Value" : "Parabellyx"}
+        ],    
+        "ImageId" : { 
+          "Fn::FindInMap" : [ 
+            "OSType2AMI", 
+            { 
+              "Ref" : "ApplicationImage" 
+            }, 
+            "AMIId"
+          ]
+        },
+        "InstanceType"   : { "Ref" : "InstanceType" },
+        "KeyName"        : { "Ref" : "KeyPair" },
+        "SecurityGroups" : [{"Ref" : "SecurityGroup"}],
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/sda1",
+            "Ebs": {
+              "VolumeType": "gp2",
+              "VolumeSize": "80"
+            }
+          }
+        ],
+        "UserData":{
+          "Fn::Base64":{
+            "Fn::Join":[
+              "\n",
+              [ 
+                "#!/bin/bash",
+
+                "{",
+                
+                "echo \"=======> DAIR BOOSTERPACK INSTALLATION IS STARTING <=======\"",
+                "echo $(date)",
+
+                "#This is for release v0.1",
+
+                "DEBIAN_FRONTEND=\"noninteractive\"",
+                
+                "sudo apt -y update && sudo apt -y upgrade",
+                "sudo mkdir -p /opt/iris",
+                "curl -o \"/tmp/build.sh\" -sfL \"https://raw.githubusercontent.com/parabellyx/iris-infra-dair/main/build.sh\"",
+                
+                "echo \"b3c8c66b78e0b3f5601b9c6064b34394975ec98576fd11fe273130a3674268ef /tmp/build.sh\" | sha256sum --check && sudo mv \"/tmp/build.sh\" \"/opt/iris\" && cd \"/opt/iris\" && chmod +x \"./build.sh\" && sudo -Eu root bash -c \"/opt/iris/build.sh\"",
+
+                "echo \"=======> DAIR BOOSTERPACK INSTALLATION IS COMPLETE <=======\"",
+                "echo $(date)",
+                
+                "} >> /var/log/boosterpack.log 2>&1"   
+              ]
+            ]
+          }
+        }
+      }
+    }
+  }, 
+  "Outputs" : {
+    "InstanceID" : {
+        "Value" : { "Ref" : "AppServer" },
+        "Description" : "Application Server Instance ID"
+      },
+    "IPAddress" : {
+      "Value" : { "Fn::GetAtt" : [ "AppServer", "PublicIp" ]},
+      "Description" : "Application Server IP Address"
+    }
+  }
+}
