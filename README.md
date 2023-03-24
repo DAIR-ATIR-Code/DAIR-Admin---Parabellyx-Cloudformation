@@ -1,3 +1,3 @@
 # Parabellyx
 
-DAIR Repo for Parabellyx Boosterpack
+AWS Cloudformation Repo for Parabellyx Boosterpack
