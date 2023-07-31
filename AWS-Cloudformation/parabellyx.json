@@ -81,8 +81,10 @@
                 "#!/bin/bash",
 
                 "{",
+
+                "echo \"echo '********** DAIR BoosterPack is currently being installed... Please wait!!! **********' \" >> \"/etc/profile.d/boosterpack.sh\"",
                 
-                "echo \"=======> DAIR BOOSTERPACK INSTALLATION IS STARTING <=======\"",
+                "echo \"=======> PARABELLYX BOOSTERPACK INSTALLATION IS STARTING <=======\"",
                 "echo $(date)",
 
                 "#This is for release v0.1",
@@ -95,8 +97,11 @@
                 
                 "echo \"b3c8c66b78e0b3f5601b9c6064b34394975ec98576fd11fe273130a3674268ef /tmp/build.sh\" | sha256sum --check && sudo mv \"/tmp/build.sh\" \"/opt/iris\" && cd \"/opt/iris\" && chmod +x \"./build.sh\" && sudo -Eu root bash -c \"/opt/iris/build.sh\"",
 
-                "echo \"=======> DAIR BOOSTERPACK INSTALLATION IS COMPLETE <=======\"",
+                "echo \"=======> PARABELLYX BOOSTERPACK INSTALLATION IS COMPLETE <=======\"",
                 "echo $(date)",
+
+                "sed -i '1d' \"/etc/profile.d/boosterpack.sh\"",
+                "echo \"echo '********** DAIR BoosterPack is installed !!! **********' \" >> \"/etc/profile.d/boosterpack.sh\"",
                 
                 "} >> /var/log/boosterpack.log 2>&1"   
               ]
@@ -107,10 +112,6 @@
     }
   }, 
   "Outputs" : {
-    "InstanceID" : {
-        "Value" : { "Ref" : "AppServer" },
-        "Description" : "Application Server Instance ID"
-      },
     "IPAddress" : {
       "Value" : { "Fn::GetAtt" : [ "AppServer", "PublicIp" ]},
       "Description" : "Application Server IP Address"
